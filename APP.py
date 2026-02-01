@@ -1,4 +1,3 @@
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -8,10 +7,11 @@ st.set_page_config(page_title="Rastreador de Cartera", layout="wide")
 st.title("💰 Rastreador de Cartera")
 
 # --- Datos de la cartera ---
+# Nota: Fondo Indexado usa valor NAV fijo (último conocido) porque Yahoo Finance no actualiza en tiempo real
 cartera = [
     {"activo": "BTC-EUR", "cantidad": 0.03546, "precio_compra": 3050, "nombre": "Bitcoin"},
     {"activo": "XRP-EUR", "cantidad": 32.26705, "precio_compra": 104.5, "nombre": "XRP"},
-    {"activo": "IE00BYX5NX33.SG", "cantidad": 822.822, "precio_compra": 9000.20, "nombre": "Fondo Indexado"}
+    {"activo": None, "cantidad": 822.822, "precio_compra": 9000.20, "nombre": "Fondo Indexado", "nav": 10.93}
 ]
 
 # --- Función para obtener precio ---
@@ -30,13 +30,18 @@ if st.button("🔄 Actualizar precios"):
 # --- Calcular valores y ganancias ---
 valores = []
 for item in cartera:
-    precio_actual = obtener_precio_yf(item["activo"])
-    if precio_actual is None:
-        st.warning(f"No se pudo obtener el precio de {item['nombre']}")
-        precio_actual = 0
+    if item.get("activo") is None:
+        precio_actual = item["nav"]  # usamos NAV fijo
+    else:
+        precio_actual = obtener_precio_yf(item["activo"])
+        if precio_actual is None:
+            st.warning(f"No se pudo obtener el precio de {item['nombre']}")
+            precio_actual = 0
+
     valor_actual = precio_actual * item["cantidad"]
     ganancia = valor_actual - item["precio_compra"]
     ganancia_pct = (ganancia / item["precio_compra"]) * 100 if item["precio_compra"] != 0 else 0
+
     valores.append({
         "Activo": item["nombre"],
         "Cantidad": item["cantidad"],
