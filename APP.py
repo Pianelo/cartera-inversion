@@ -1,18 +1,17 @@
-# Mini-app de cartera con Streamlit
+
 import streamlit as st
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Rastreador de Inversiones", layout="wide")
-
+st.set_page_config(page_title="Rastreador de Cartera", layout="wide")
 st.title("💰 Rastreador de Cartera")
 
-# --- Datos de tu cartera ---
+# --- Datos de la cartera ---
 cartera = [
     {"activo": "BTC-EUR", "cantidad": 0.03546, "precio_compra": 3050, "nombre": "Bitcoin"},
     {"activo": "XRP-EUR", "cantidad": 32.26705, "precio_compra": 104.5, "nombre": "XRP"},
-    {"activo": "IE00BYX5NX33.FUND", "cantidad": 822.822, "precio_compra": 9000.20, "nombre": "Fondo Indexado"}
+    {"activo": "IE00BYX5NX33.SG", "cantidad": 822.822, "precio_compra": 9000.20, "nombre": "Fondo Indexado"}
 ]
 
 # --- Función para obtener precio ---
@@ -28,13 +27,16 @@ def obtener_precio_yf(ticker):
 if st.button("🔄 Actualizar precios"):
     st.experimental_rerun()
 
-# --- Calcular valores ---
+# --- Calcular valores y ganancias ---
 valores = []
 for item in cartera:
     precio_actual = obtener_precio_yf(item["activo"])
+    if precio_actual is None:
+        st.warning(f"No se pudo obtener el precio de {item['nombre']}")
+        precio_actual = 0
     valor_actual = precio_actual * item["cantidad"]
     ganancia = valor_actual - item["precio_compra"]
-    ganancia_pct = (ganancia / item["precio_compra"]) * 100
+    ganancia_pct = (ganancia / item["precio_compra"]) * 100 if item["precio_compra"] != 0 else 0
     valores.append({
         "Activo": item["nombre"],
         "Cantidad": item["cantidad"],
@@ -47,6 +49,7 @@ for item in cartera:
 
 df = pd.DataFrame(valores)
 
+# --- Mostrar tabla ---
 st.subheader("📊 Resumen de la cartera")
 st.dataframe(df)
 
